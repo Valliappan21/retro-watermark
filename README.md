@@ -10,6 +10,18 @@
 `retro-watermark` is a React Native native module for stamping text onto a
 local image and receiving a newly written image URI back in JavaScript.
 
+## Demo
+
+```
+╔═══════════════╗
+║  FIELD TESTS  ║
+╚═══════════════╝
+```
+
+| Android | iOS |
+| --- | --- |
+| ![retro-watermark Android demo](./demo/android.gif) | ![retro-watermark iOS demo](./demo/ios.gif) |
+
 It ships native implementations for:
 
 - Android: Kotlin bitmap rendering
@@ -48,6 +60,7 @@ The package includes the files needed by consuming apps:
 - `retro-watermark.podspec`
 - `android/build.gradle`
 - `android/src/**`
+- `demo/**`
 - `ios/**`
 - `README.md`
 - `LICENSE`

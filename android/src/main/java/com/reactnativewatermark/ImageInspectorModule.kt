@@ -9,7 +9,6 @@ import android.graphics.Rect
 import android.graphics.Typeface
 import android.net.Uri
 import android.widget.ImageView
-import android.widget.Toast
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
@@ -153,11 +152,6 @@ class ImageInspectorModule(
                     // The native ImageView is intentionally created without attaching it.
                     val imageView = ImageView(reactContext)
                     imageView.setImageURI(finalUri)
-                    Toast.makeText(
-                        reactContext,
-                        "Saved ${outputFile.name} ($imageWidth × $imageHeight)",
-                        Toast.LENGTH_LONG
-                    ).show()
                     promise.resolve(result)
                 } catch (error: Exception) {
                     promise.reject(ERROR_IMAGE_VIEW, "Unable to create final ImageView", error)
