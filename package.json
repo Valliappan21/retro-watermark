@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Retro-styled native image watermarking for React Native.",
   "author": "Valliappan Periannan",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Valliappan21/retro-watermark.git"
+  },
   "main": "index.js",
   "types": "index.d.ts",
   "react-native": "index.js",
