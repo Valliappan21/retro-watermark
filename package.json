@@ -1,0 +1,43 @@
+{
+  "name": "retro-watermark",
+  "version": "1.0.0",
+  "description": "Retro-styled native image watermarking for React Native.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "react-native": "index.js",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "scripts",
+    "android/build.gradle",
+    "android/src",
+    "ios/RNImageInspector.m",
+    "retro-watermark.podspec",
+    "react-native.config.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "react-native",
+    "android",
+    "ios",
+    "kotlin",
+    "objective-c",
+    "native-module",
+    "image",
+    "dimensions",
+    "watermark",
+    "retro"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  },
+  "scripts": {
+    "smoke": "node scripts/smoke-test.js",
+    "test": "node --check index.js && node scripts/smoke-test.js",
+    "prepublishOnly": "npm test"
+  },
+  "sideEffects": false
+}
