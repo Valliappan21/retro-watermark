@@ -7,19 +7,16 @@ var ReactNative = require('react-native');
  * verifies that the URI is readable, writes a newly named watermarked image,
  * creates a detached native ImageView/UIImageView, and resolves the final local URI.
  */
-function inspectLocalImage(
-  localUri,
-  text,
-  position,
-  rotateDegree,
-  colorCode,
-  margins
-) {
-  if (typeof localUri !== 'string' || localUri.trim().length === 0) {
+function inspectLocalImage(options) {
+  if (options === null || typeof options !== 'object' || Array.isArray(options)) {
+    return Promise.reject(new TypeError('options must be an object.'));
+  }
+
+  if (typeof options.localUri !== 'string' || options.localUri.trim().length === 0) {
     return Promise.reject(new TypeError('localUri must be a non-empty string.'));
   }
 
-  if (typeof text !== 'string' || text.trim().length === 0) {
+  if (typeof options.text !== 'string' || options.text.trim().length === 0) {
     return Promise.reject(new TypeError('text must be a non-empty string.'));
   }
 
@@ -34,17 +31,36 @@ function inspectLocalImage(
     'bottom-center',
     'bottom-right',
   ];
-  if (validPositions.indexOf(position) === -1) {
+  var resolvedPosition =
+    options.position === undefined ? 'top-center' : options.position;
+  if (validPositions.indexOf(resolvedPosition) === -1) {
     return Promise.reject(
       new TypeError('position must be one of: ' + validPositions.join(', ') + '.')
     );
   }
 
-  if (typeof rotateDegree !== 'number' || !Number.isFinite(rotateDegree)) {
+  var resolvedRotateDegree =
+    options.rotateDegree === undefined ? 0 : options.rotateDegree;
+  if (
+    typeof resolvedRotateDegree !== 'number' ||
+    !Number.isFinite(resolvedRotateDegree)
+  ) {
     return Promise.reject(new TypeError('rotateDegree must be a finite number.'));
   }
 
-  var resolvedColorCode = colorCode === undefined ? '#FFFFFF' : colorCode;
+  var resolvedFontSize = options.fontSize;
+  if (
+    resolvedFontSize !== undefined &&
+    (typeof resolvedFontSize !== 'number' ||
+      !Number.isFinite(resolvedFontSize) ||
+      resolvedFontSize <= 0)
+  ) {
+    return Promise.reject(
+      new TypeError('fontSize must be a finite number greater than 0.')
+    );
+  }
+
+  var resolvedColorCode = options.colorCode === undefined ? '#FFFFFF' : options.colorCode;
   var hexColorPattern = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
   if (
     typeof resolvedColorCode !== 'string' ||
@@ -57,7 +73,7 @@ function inspectLocalImage(
     );
   }
 
-  var resolvedMargins = margins === undefined ? {} : margins;
+  var resolvedMargins = options.margins === undefined ? {} : options.margins;
   if (
     resolvedMargins === null ||
     typeof resolvedMargins !== 'object' ||
@@ -98,14 +114,19 @@ function inspectLocalImage(
     );
   }
 
-  return nativeModule.inspectLocalImage(
-    localUri.trim(),
-    text.trim(),
-    position,
-    rotateDegree,
-    resolvedColorCode,
-    normalizedMargins
-  );
+  var nativeOptions = {
+    localUri: options.localUri.trim(),
+    text: options.text.trim(),
+    position: resolvedPosition,
+    rotateDegree: resolvedRotateDegree,
+    colorCode: resolvedColorCode,
+    margins: normalizedMargins,
+  };
+  if (resolvedFontSize !== undefined) {
+    nativeOptions.fontSize = resolvedFontSize;
+  }
+
+  return nativeModule.inspectLocalImage(nativeOptions);
 }
 
 module.exports = inspectLocalImage;

@@ -69,6 +69,7 @@ function App() {
   const [watermarkPosition, setWatermarkPosition] =
     useState<WatermarkPosition>('top-center');
   const [watermarkRotation, setWatermarkRotation] = useState(0);
+  const [watermarkFontSize, setWatermarkFontSize] = useState(48);
   const [watermarkMargins, setWatermarkMargins] = useState(
     DEFAULT_WATERMARK_MARGINS,
   );
@@ -100,6 +101,13 @@ function App() {
       ...current,
       [direction]: Number.isFinite(numericValue) ? numericValue : 0,
     }));
+  };
+
+  const updateFontSize = (nextValue: string) => {
+    const numericValue = Number(nextValue.replace(/[^0-9.]/g, ''));
+    setWatermarkFontSize(
+      Number.isFinite(numericValue) && numericValue > 0 ? numericValue : 1,
+    );
   };
 
   const importImage = async () => {
@@ -161,28 +169,29 @@ function App() {
     setIsApplying(true);
 
     try {
-      const dimensions = await inspectLocalImage(
-        selectedImage.uri,
-        watermarkText,
-        watermarkPosition,
-        watermarkRotation,
-        watermarkColor,
-        watermarkMargins,
-      );
+      const result = await inspectLocalImage({
+        localUri: selectedImage.uri,
+        text: watermarkText,
+        position: watermarkPosition,
+        rotateDegree: watermarkRotation,
+        fontSize: watermarkFontSize,
+        colorCode: watermarkColor,
+        margins: watermarkMargins,
+      });
 
       setSelectedImage(current =>
         current
           ? {
               ...current,
-              uri: dimensions.uri,
-              fileName: dimensions.fileName,
-              width: dimensions.width,
-              height: dimensions.height,
+              uri: result.uri,
+              fileName: result.fileName,
+              width: result.width,
+              height: result.height,
             }
           : current,
       );
       setMessage(
-        `Native watermark saved: ${dimensions.fileName} (${dimensions.width} × ${dimensions.height})`,
+        `Native watermark saved: ${result.fileName} (${result.width} × ${result.height})`,
       );
     } catch (error) {
       setMessage(
@@ -283,6 +292,16 @@ function App() {
                 value={watermarkText}
               />
 
+              <Text style={styles.label}>Font size</Text>
+              <TextInput
+                accessibilityLabel="Watermark font size"
+                inputMode="numeric"
+                keyboardType="numeric"
+                onChangeText={updateFontSize}
+                style={styles.input}
+                value={String(watermarkFontSize)}
+              />
+
               <Text style={styles.label}>Color code</Text>
               <View style={styles.colorOptions}>
                 {WATERMARK_COLORS.map(color => (
@@ -367,6 +386,7 @@ function App() {
 
               <View style={styles.configStrip}>
                 <Text style={styles.configText}>
+                  font {watermarkFontSize}px ·{' '}
                   margins {JSON.stringify(watermarkMargins)} · native output URI
                 </Text>
               </View>

@@ -80,19 +80,20 @@ The package includes the files needed by consuming apps:
 ```ts
 import { inspectLocalImage } from 'retro-watermark';
 
-const result = await inspectLocalImage(
-  imageUri,
-  'CONFIDENTIAL',
-  'top-center',
-  0,
-  '#FF004D',
-  {
+const result = await inspectLocalImage({
+  localUri: imageUri,
+  text: 'CONFIDENTIAL',
+  position: 'top-center',
+  rotateDegree: 0,
+  fontSize: 48,
+  colorCode: '#FF004D',
+  margins: {
     top: 10,
     right: 20,
     bottom: 30,
     left: 40,
   },
-);
+});
 
 console.log(result.uri);      // final watermarked image URI
 console.log(result.fileName); // generated file name
@@ -103,15 +104,39 @@ console.log(result.height);
 ## API
 
 ```ts
-inspectLocalImage(
+inspectLocalImage({
   localUri: string,
   text: string,
-  position: WatermarkPosition,
-  rotateDegree: number,
+  position?: WatermarkPosition,
+  rotateDegree?: number,
+  fontSize?: number,
   colorCode?: string,
   margins?: WatermarkMargins,
-): Promise<LocalImageDimensions>
+}): Promise<LocalImageDimensions>
 ```
+
+`inspectLocalImage` accepts a single options object. Only `localUri` and `text`
+are required; every other field is optional and receives a native default.
+
+Defaults:
+
+- `position`: `'top-center'`
+- `rotateDegree`: `0`
+- `fontSize`: `7%` of the smaller image side
+- `colorCode`: `'#FFFFFF'`
+- `margins`: `{ top: 0, right: 0, bottom: 0, left: 0 }`
+
+### `localUri`
+
+Readable local image URI or local file path.
+
+Android accepts readable `file://` and `content://` URIs. iOS accepts readable
+local `file://` URIs, such as images copied into the app sandbox by an image
+picker.
+
+### `text`
+
+Watermark text to draw onto the image. Empty or whitespace-only text is rejected.
 
 ### `position`
 
@@ -138,6 +163,18 @@ Accepts:
 - `#AARRGGBB`
 
 Default: `#FFFFFF`
+
+### `fontSize`
+
+```ts
+fontSize?: number;
+```
+
+Font size is measured in image pixels. If omitted, the native renderer uses
+`7%` of the smaller image side.
+
+The renderer may scale the text down when needed so the rotated watermark still
+fits inside the output image.
 
 ### `margins`
 
@@ -166,9 +203,10 @@ The native module:
 1. Validates the local URI.
 2. Checks file/read access.
 3. Decodes the image.
-4. Draws the text watermark at native level.
-5. Writes a new image with a generated file name.
-6. Returns the new image URI, source URI, file name, width, and height.
+4. Applies default options for position, rotation, font size, color, and margins.
+5. Draws the text watermark at native level.
+6. Writes a new image with a generated file name.
+7. Returns the new image URI, source URI, file name, width, and height.
 
 Android accepts readable `file://` and `content://` URIs.
 
@@ -191,6 +229,12 @@ The promise can reject with:
 - `E_INVALID_IMAGE`
 - `E_IMAGE_PROCESSING`
 
+## Changelog
+
+Version `1.1.0` includes a major API change: `inspectLocalImage` now accepts a
+single options object instead of positional parameters. See
+[`CHANGELOG.md`](./CHANGELOG.md) for migration details.
+
 ## Local sample
 
 A bare React Native sample app lives in [`sample`](./sample).
@@ -204,8 +248,8 @@ npm run ios
 ```
 
 The sample imports `retro-watermark` with `"file:.."`, lets you choose an image,
-configure text/color/position/rotation/margins, and preview the saved native
-output.
+configure text, font size, color, position, rotation, and margins, then preview
+the saved native output.
 
 ## License
 

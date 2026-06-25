@@ -35,21 +35,41 @@ static NSSet<NSString *> *SupportedPositions(void)
 }
 
 RCT_REMAP_METHOD(inspectLocalImage,
-                 inspectLocalImage:(NSString *)localUri
-                 watermarkText:(NSString *)watermarkText
-                 position:(NSString *)position
-                 rotateDegree:(nonnull NSNumber *)rotateDegree
-                 colorCode:(NSString *)colorCode
-                 margins:(NSDictionary *)margins
+                 inspectLocalImage:(NSDictionary *)options
                  resolver:(RCTPromiseResolveBlock)resolve
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
+  if (![options isKindOfClass:NSDictionary.class]) {
+    reject(ERROR_INVALID_URI, @"options must be an object", nil);
+    return;
+  }
+
+  NSString *localUri = [self stringValueForKey:@"localUri" inOptions:options defaultValue:nil];
+  NSString *watermarkText = [self stringValueForKey:@"text" inOptions:options defaultValue:nil];
+  NSString *position = [self stringValueForKey:@"position" inOptions:options defaultValue:@"top-center"];
+  NSNumber *rotateDegree = [self numberValueForKey:@"rotateDegree" inOptions:options defaultValue:@0];
+  NSNumber *fontSize = [self numberValueForKey:@"fontSize" inOptions:options defaultValue:nil];
+  NSString *colorCode = [self stringValueForKey:@"colorCode" inOptions:options defaultValue:@"#FFFFFF"];
+  id marginsValue = options[@"margins"];
+  if (marginsValue != nil && marginsValue != (id)kCFNull && ![marginsValue isKindOfClass:NSDictionary.class]) {
+    reject(ERROR_INVALID_MARGIN, @"margins must be an object", nil);
+    return;
+  }
+  NSDictionary *margins = [marginsValue isKindOfClass:NSDictionary.class] ? marginsValue : @{};
+
+  if (localUri == nil || [localUri stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet].length == 0) {
+    reject(ERROR_INVALID_URI, @"localUri must be a non-empty string", nil);
+    return;
+  }
+  localUri = [localUri stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+
   if (watermarkText == nil || [watermarkText stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet].length == 0) {
     reject(ERROR_INVALID_TEXT, @"Watermark text must not be empty", nil);
     return;
   }
+  watermarkText = [watermarkText stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
 
-  if (![SupportedPositions() containsObject:position]) {
+  if (position == nil || ![SupportedPositions() containsObject:position]) {
     reject(ERROR_INVALID_POSITION, [NSString stringWithFormat:@"Unsupported watermark position: %@", position], nil);
     return;
   }
@@ -63,6 +83,17 @@ RCT_REMAP_METHOD(inspectLocalImage,
   NSDictionary *watermarkMargins = [self normalizedMargins:margins];
   if (watermarkMargins == nil) {
     reject(ERROR_INVALID_MARGIN, @"Watermark margins must be finite numbers 0 or greater", nil);
+    return;
+  }
+
+  if (rotateDegree == nil || !isfinite(rotateDegree.doubleValue)) {
+    reject(ERROR_PROCESSING, @"rotateDegree must be a finite number", nil);
+    return;
+  }
+
+  if ((options[@"fontSize"] != nil && options[@"fontSize"] != (id)kCFNull) &&
+      (fontSize == nil || !isfinite(fontSize.doubleValue) || fontSize.doubleValue <= 0)) {
+    reject(ERROR_PROCESSING, @"fontSize must be a finite number greater than 0", nil);
     return;
   }
 
@@ -103,6 +134,7 @@ RCT_REMAP_METHOD(inspectLocalImage,
                                                             text:watermarkText
                                                         position:position
                                                     rotateDegree:rotateDegree.doubleValue
+                                                        fontSize:fontSize
                                                            color:watermarkColor
                                                          margins:watermarkMargins];
     if (outputImage == nil) {
@@ -142,6 +174,30 @@ RCT_REMAP_METHOD(inspectLocalImage,
       [sourceURL stopAccessingSecurityScopedResource];
     }
   }
+}
+
+- (NSString *)stringValueForKey:(NSString *)key inOptions:(NSDictionary *)options defaultValue:(NSString *)defaultValue
+{
+  id value = options[key];
+  if (value == nil || value == (id)kCFNull) {
+    return defaultValue;
+  }
+  if (![value isKindOfClass:NSString.class]) {
+    return nil;
+  }
+  return value;
+}
+
+- (NSNumber *)numberValueForKey:(NSString *)key inOptions:(NSDictionary *)options defaultValue:(NSNumber *)defaultValue
+{
+  id value = options[key];
+  if (value == nil || value == (id)kCFNull) {
+    return defaultValue;
+  }
+  if (![value isKindOfClass:NSNumber.class]) {
+    return nil;
+  }
+  return value;
 }
 
 - (NSURL *)normalizedURL:(NSString *)value
@@ -280,6 +336,7 @@ RCT_REMAP_METHOD(inspectLocalImage,
                                         text:(NSString *)text
                                     position:(NSString *)position
                                 rotateDegree:(CGFloat)rotateDegree
+                                    fontSize:(NSNumber *)fontSize
                                        color:(UIColor *)color
                                      margins:(NSDictionary *)margins
 {
@@ -291,8 +348,8 @@ RCT_REMAP_METHOD(inspectLocalImage,
   return [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
     [image drawInRect:CGRectMake(0, 0, imageSize.width, imageSize.height)];
 
-    CGFloat fontSize = MIN(imageSize.width, imageSize.height) * 0.07;
-    UIFont *font = [UIFont boldSystemFontOfSize:MAX(1, fontSize)];
+    CGFloat resolvedFontSize = fontSize == nil ? MIN(imageSize.width, imageSize.height) * 0.07 : fontSize.doubleValue;
+    UIFont *font = [UIFont boldSystemFontOfSize:MAX(1, resolvedFontSize)];
     NSDictionary *attributes = @{
       NSFontAttributeName: font,
       NSForegroundColorAttributeName: color
