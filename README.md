@@ -1,16 +1,26 @@
-# retro-watermark
+# retro-watermark 🕶️
 
 ```
 ╔══════════════════════════════════════╗
 ║  RETRO WATERMARK                     ║
-║  native image stamping for RN apps   ║
+║  headless watermark generator for RN ║
 ╚══════════════════════════════════════╝
 ```
 
-`retro-watermark` is a React Native native module for stamping text onto a
-local image and receiving a newly written image URI back in JavaScript.
+`retro-watermark` is the first headless watermark generator for React Native 🚀:
+it stamps text onto a local image through native Android and iOS renderers, then
+returns a newly written image URI back to JavaScript without mounting a visible
+watermark view.
 
-## Demo
+## ✨ Key Points
+
+- 🥇 First headless watermark generator built for React Native image workflows.
+- 👻 No visible overlay, screenshot capture, or attached native view is required.
+- 🖼️ Generates a real watermarked image file that can be previewed, uploaded, or
+  saved.
+- ⚡ Runs native bitmap rendering on Android and native image rendering on iOS.
+
+## 🎬 Demo
 
 ```
 ╔═══════════════╗
@@ -30,7 +40,7 @@ It ships native implementations for:
 No React or React Native version is pinned in `peerDependencies`; both are
 declared as `"*"`, so consuming apps can choose their own React Native version.
 
-## Install
+## 📦 Install
 
 ```sh
 npm install retro-watermark
@@ -50,7 +60,7 @@ cd ..
 npx react-native run-ios
 ```
 
-## What gets packed for npm
+## 📁 What gets packed for npm
 
 The package includes the files needed by consuming apps:
 
@@ -65,7 +75,7 @@ The package includes the files needed by consuming apps:
 - `README.md`
 - `LICENSE`
 
-## Usage
+## 🧪 Usage
 
 ```ts
 import { inspectLocalImage } from 'retro-watermark';
