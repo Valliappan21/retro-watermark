@@ -29,18 +29,28 @@ export interface WatermarkMargins {
   left?: number;
 }
 
+export interface InspectLocalImageOptions {
+  /** Local file/content URI or local file path for the source image. */
+  localUri: string;
+  /** Watermark text to draw. */
+  text: string;
+  /** Watermark position. Defaults to top-center. */
+  position?: WatermarkPosition;
+  /** Text rotation in degrees. Defaults to 0. */
+  rotateDegree?: number;
+  /** Font size in image pixels. Defaults to 7% of the smaller image side. */
+  fontSize?: number;
+  /** Hexadecimal watermark color. Defaults to #FFFFFF. */
+  colorCode?: string;
+  /** Directional margins in image pixels. Every direction defaults to 0. */
+  margins?: WatermarkMargins;
+}
+
 /**
  * Writes a watermarked copy beside the local image when possible and returns its URI.
  */
 export function inspectLocalImage(
-  localUri: string,
-  text: string,
-  position: WatermarkPosition,
-  rotateDegree: number,
-  /** Hexadecimal watermark color. Defaults to #FFFFFF. */
-  colorCode?: string,
-  /** Directional margins in image pixels. Every direction defaults to 0. */
-  margins?: WatermarkMargins,
+  options: InspectLocalImageOptions,
 ): Promise<LocalImageDimensions>;
 
 export default inspectLocalImage;

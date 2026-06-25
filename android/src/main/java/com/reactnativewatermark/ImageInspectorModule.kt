@@ -37,15 +37,50 @@ class ImageInspectorModule(
 
     @ReactMethod
     fun inspectLocalImage(
-        localUri: String,
-        watermarkText: String,
-        position: String,
-        rotateDegree: Double,
-        colorCode: String,
-        margins: ReadableMap,
+        options: ReadableMap,
         promise: Promise
     ) {
         try {
+            val localUri = readRequiredString(options, "localUri")
+            if (localUri == null) {
+                promise.reject(ERROR_INVALID_URI, "localUri must be a non-empty string")
+                return
+            }
+            val watermarkText = readRequiredString(options, "text")
+            if (watermarkText == null) {
+                promise.reject(ERROR_INVALID_TEXT, "Watermark text must not be empty")
+                return
+            }
+            val position = if (options.hasKey("position") && !options.isNull("position")) {
+                readString(options, "position") ?: run {
+                    promise.reject(ERROR_INVALID_POSITION, "position must be a string")
+                    return
+                }
+            } else "top-center"
+            val rotateDegree = if (options.hasKey("rotateDegree") && !options.isNull("rotateDegree")) {
+                readDouble(options, "rotateDegree") ?: run {
+                    promise.reject(ERROR_PROCESSING, "rotateDegree must be a finite number")
+                    return
+                }
+            } else 0.0
+            val fontSize = if (options.hasKey("fontSize") && !options.isNull("fontSize")) {
+                readDouble(options, "fontSize")?.toFloat()?.takeIf { it > 0f } ?: run {
+                    promise.reject(ERROR_PROCESSING, "fontSize must be a finite number greater than 0")
+                    return
+                }
+            } else null
+            val colorCode = if (options.hasKey("colorCode") && !options.isNull("colorCode")) {
+                readString(options, "colorCode") ?: run {
+                    promise.reject(ERROR_INVALID_COLOR, "colorCode must be a string")
+                    return
+                }
+            } else "#FFFFFF"
+            val marginsResult = readOptionalMap(options, "margins")
+            if (marginsResult.isInvalid) {
+                promise.reject(ERROR_INVALID_MARGIN, "margins must be an object")
+                return
+            }
+
             if (watermarkText.isBlank()) {
                 promise.reject(ERROR_INVALID_TEXT, "Watermark text must not be empty")
                 return
@@ -60,7 +95,7 @@ class ImageInspectorModule(
                 promise.reject(ERROR_INVALID_COLOR, "Unsupported watermark color: $colorCode")
                 return
             }
-            val watermarkMargins = readMargins(margins)
+            val watermarkMargins = readOptionalMargins(marginsResult.value)
             if (watermarkMargins == null) {
                 promise.reject(ERROR_INVALID_MARGIN, "Watermark margins must be finite numbers 0 or greater")
                 return
@@ -116,6 +151,7 @@ class ImageInspectorModule(
                     watermarkText,
                     position,
                     rotateDegree.toFloat(),
+                    fontSize,
                     watermarkColor,
                     watermarkMargins
                 )
@@ -169,6 +205,7 @@ class ImageInspectorModule(
         text: String,
         position: String,
         rotateDegree: Float,
+        fontSize: Float?,
         color: Int,
         margins: WatermarkMargins
     ) {
@@ -176,7 +213,7 @@ class ImageInspectorModule(
             this.color = color
             textAlign = Paint.Align.LEFT
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-            textSize = min(imageWidth, imageHeight) * 0.07f
+            textSize = fontSize ?: min(imageWidth, imageHeight) * 0.07f
         }
 
         val maximumTextWidth = imageWidth.toFloat().coerceAtLeast(1f)
@@ -264,6 +301,57 @@ class ImageInspectorModule(
             ) result else null
         } catch (_: Exception) {
             null
+        }
+    }
+
+    private fun readOptionalMargins(margins: ReadableMap?): WatermarkMargins? {
+        return if (margins == null) {
+            WatermarkMargins(top = 0f, right = 0f, bottom = 0f, left = 0f)
+        } else {
+            readMargins(margins)
+        }
+    }
+
+    private fun readRequiredString(options: ReadableMap, key: String): String? {
+        return try {
+            if (!options.hasKey(key) || options.isNull(key)) {
+                null
+            } else {
+                options.getString(key)?.trim()?.takeIf { it.isNotEmpty() }
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun readString(options: ReadableMap, key: String): String? {
+        return try {
+            if (!options.hasKey(key) || options.isNull(key)) null else options.getString(key)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun readDouble(options: ReadableMap, key: String): Double? {
+        return try {
+            if (!options.hasKey(key) || options.isNull(key)) {
+                null
+            } else {
+                options.getDouble(key).takeIf { it.isFinite() }
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun readOptionalMap(options: ReadableMap, key: String): OptionalMapResult {
+        return try {
+            OptionalMapResult(
+                value = if (!options.hasKey(key) || options.isNull(key)) null else options.getMap(key),
+                isInvalid = false
+            )
+        } catch (_: Exception) {
+            OptionalMapResult(value = null, isInvalid = true)
         }
     }
 
@@ -360,6 +448,11 @@ class ImageInspectorModule(
         val right: Float,
         val bottom: Float,
         val left: Float
+    )
+
+    private data class OptionalMapResult(
+        val value: ReadableMap?,
+        val isInvalid: Boolean
     )
 
     private data class NativeFailure(

@@ -1,7 +1,7 @@
 {
   "name": "retro-watermark",
-  "version": "1.0.1",
-  "description": "Retro-styled native image watermarking for React Native.",
+  "version": "1.1.0",
+  "description": "The first headless native text watermark generator for React Native.",
   "author": "Valliappan Periannan",
   "repository": {
     "type": "git",
@@ -21,6 +21,7 @@
     "retro-watermark.podspec",
     "react-native.config.js",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "keywords": [
@@ -43,6 +44,8 @@
   "scripts": {
     "smoke": "node scripts/smoke-test.js",
     "test": "node --check index.js && node scripts/smoke-test.js",
+    "publish:dry-run": "npm pack --dry-run",
+    "publish:npm": "npm publish --access public",
     "prepublishOnly": "npm test"
   },
   "sideEffects": false
